@@ -13,3 +13,4 @@ $messages = [
 $index = array_rand($messages);
 return $messages[$index]; }
 }
+

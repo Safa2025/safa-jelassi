@@ -1,10 +1,18 @@
-{% extends 'base.html.twig' %}
+{# templates/home/index.html.twig #}
 
-{% block title %}Accueil{% endblock %}
+<h2>Message positif du jour :</h2>
+<p>{{ happyMessage }}</p>
 
-{% block body %}
-<h1>{{ controller_name }}: Bienvenue !</h1>
-<p>Identifiant: {{ identifiant }}</p>
+<h2>Liste des auteurs :</h2>
+<ul>
+{% for author in authors %}
+    <li>{{ author.username }} ({{ author.nbBooks }} livres)</li>
+{% endfor %}
+</ul>
 
-<a href="{{ path('hello', {'id': identifiant}) }}">Dire Hello</a>
-{% endblock %}
+<h2>Meilleurs auteurs (plus de 3 livres) :</h2>
+<ul>
+{% for author in bestAuthors %}
+    <li>{{ author.username }} ({{ author.nbBooks }} livres)</li>
+{% endfor %}
+</ul>
