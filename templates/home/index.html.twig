@@ -1,4 +1,10 @@
-{{controller_name}}
-{{identifiant}}
+{% extends 'base.html.twig' %}
 
+{% block title %}Accueil{% endblock %}
 
+{% block body %}
+<h1>{{ controller_name }}: Bienvenue !</h1>
+<p>Identifiant: {{ identifiant }}</p>
+
+<a href="{{ path('hello', {'id': identifiant}) }}">Dire Hello</a>
+{% endblock %}

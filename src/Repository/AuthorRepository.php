@@ -16,28 +16,36 @@ class AuthorRepository extends ServiceEntityRepository
         parent::__construct($registry, Author::class);
     }
 
-    //    /**
-    //     * @return Author[] Returns an array of Author objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('a')
-    //            ->andWhere('a.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('a.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    // 🔍 Méthode DQL : afficher tous les auteurs triés par username croissant
+    public function ShowAllAuthorsDQL(): array
+    {
+        $query = $this->getEntityManager()
+            ->createQuery('
+                SELECT a
+                FROM App\Entity\Author a
+                WHERE a.username LIKE :condition
+                ORDER BY a.username ASC
+            ')
+            ->setParameter('condition', '%a%');
 
-    //    public function findOneBySomeField($value): ?Author
-    //    {
-    //        return $this->createQueryBuilder('a')
-    //            ->andWhere('a.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        return $query->getResult();
+    }
+
+    // 🔢 Rechercher les auteurs selon un intervalle du nombre de livres
+    public function findAuthorsByBookRange(int $min, int $max): array
+    {
+        $query = $this->getEntityManager()
+            ->createQuery('
+                SELECT a 
+                FROM App\Entity\Author a 
+                WHERE a.nbBooks BETWEEN :min AND :max 
+                ORDER BY a.nbBooks DESC
+            ')
+            ->setParameters([
+                'min' => $min,
+                'max' => $max
+            ]);
+
+        return $query->getResult();
+    }
 }

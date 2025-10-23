@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des livres{% endblock %}
+
+{% block body %}
+<h1>Liste des livres</h1>
+
+<a href="{{ path('book_new') }}">Ajouter un livre</a>
+
+<p>Livres publiés : {{ publishedCount }}</p>
+<p>Livres non publiés : {{ unpublishedCount }}</p>
+
+<table border="1" cellpadding="5" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Titre</th>
+            <th>Auteur</th>
+            <th>Publié ?</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for book in books %}
+            <tr>
+                <td>{{ book.title }}</td>
+                <td>{{ book.author.username }}</td>
+                <td>{{ book.published ? 'Oui' : 'Non' }}</td>
+                <td>
+                    <a href="{{ path('book_show', {'id': book.id}) }}">Voir</a> |
+                    <a href="{{ path('book_edit', {'id': book.id}) }}">Modifier</a> |
+                    <a href="{{ path('book_delete', {'id': book.id}) }}" 
+                       onclick="return confirm('Voulez-vous vraiment supprimer ce livre ?')">Supprimer</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4">Aucun livre trouvé</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

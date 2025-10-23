@@ -2,49 +2,126 @@
 
 namespace App\Controller;
 
+use App\Entity\Author;
+use App\Form\AuthorType;
+use App\Repository\AuthorRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Annotation\Route;
 
-final class AuthorController extends AbstractController
+#[Route('/author')]
+class AuthorController extends AbstractController
 {
-   #[Route('/author/{name}', name: 'show_author')]
-public function showAuthor(string $name): Response
-{
-    return $this->render('author/show.html.twig', [
-        'name' => $name,
-    ]);
-}
-#[Route('/authors', name: 'list_authors')]
-public function listAuthors(): Response
-{
-    $authors = [
-        ['id' => 1, 'picture' => '/images/Victor-Hugo.jpg', 'username' => 'Victor Hugo', 'email' => 'victor.hugo@gmail.com', 'nb_books' => 100],
-        ['id' => 2, 'picture' => '/images/william-shakespeare.jpg', 'username' => 'William Shakespeare', 'email' => 'william.shakespeare@gmail.com', 'nb_books' => 200],
-        ['id' => 3, 'picture' => '/images/Taha-Hussein.jpg', 'username' => 'Taha Hussein', 'email' => 'taha.hussein@gmail.com', 'nb_books' => 300],
-    ];
+    // Liste des auteurs
+    #[Route('/list', name: 'author_list')]
+    public function list(AuthorRepository $repo): Response
+    {
+        $authors = $repo->findAll();
 
-    return $this->render('author/list.html.twig', [
-        'authors' => $authors
-    ]);
-}
-#[Route('/author/details/{id}', name: 'author_details')]
-public function authorDetails(int $id): Response
-{
-    $authors = [
-        1 => ['id' => 1, 'picture' => '/images/Victor-Hugo.jpg', 'username' => 'Victor Hugo', 'email' => 'victor.hugo@gmail.com', 'nb_books' => 100],
-        2 => ['id' => 2, 'picture' => '/images/william-shakespeare.jpg', 'username' => 'William Shakespeare', 'email' => 'william.shakespeare@gmail.com', 'nb_books' => 200],
-        3 => ['id' => 3, 'picture' => '/images/Taha-Hussein.jpg', 'username' => 'Taha Hussein', 'email' => 'taha.hussein@gmail.com', 'nb_books' => 300],
-    ];
-
-    if (!isset($authors[$id])) {
-        throw $this->createNotFoundException('Auteur non trouvé.');
+        return $this->render('author/list.html.twig', [
+            'authors' => $authors
+        ]);
     }
 
-    $author = $authors[$id];
+    // Ajouter un auteur avec données statiques
+    #[Route('/add-static', name: 'author_add_static')]
+    public function addStatic(EntityManagerInterface $em): Response
+    {
+        $author = new Author();
+        $author->setUsername('Albert Camus');
+        $author->setEmail('albert.camus@gmail.com');
+        $author->setNbBooks(0);
 
-    return $this->render('author/showAuthor.html.twig', [
-        'author' => $author
-    ]);
-}
+        $em->persist($author);
+        $em->flush();
+
+        return $this->redirectToRoute('author_list');
+    }
+
+    // Ajouter un auteur via formulaire
+    #[Route('/new', name: 'author_new')]
+    public function new(Request $request, EntityManagerInterface $em): Response
+    {
+        $author = new Author();
+        $form = $this->createForm(AuthorType::class, $author);
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->persist($author);
+            $em->flush();
+            return $this->redirectToRoute('author_list');
+        }
+
+        return $this->render('author/new.html.twig', [
+            'form' => $form->createView()
+        ]);
+    }
+
+    // Modifier un auteur
+    #[Route('/edit/{id}', name: 'author_edit')]
+    public function edit(Author $author, Request $request, EntityManagerInterface $em): Response
+    {
+        $form = $this->createForm(AuthorType::class, $author);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->flush();
+            return $this->redirectToRoute('author_list');
+        }
+
+        return $this->render('author/edit.html.twig', [
+            'form' => $form->createView()
+        ]);
+    }
+
+    // Supprimer un auteur
+    #[Route('/delete/{id}', name: 'author_delete')]
+    public function delete(Author $author, EntityManagerInterface $em): Response
+    {
+        $em->remove($author);
+        $em->flush();
+
+        return $this->redirectToRoute('author_list');
+    }
+
+    // Supprimer tous les auteurs dont nbBooks = 0
+    #[Route('/cleanup', name: 'author_cleanup')]
+    public function cleanup(EntityManagerInterface $em, AuthorRepository $repo): Response
+    {
+        $authors = $repo->findBy(['nbBooks' => 0]);
+
+        foreach ($authors as $author) {
+            $em->remove($author);
+        }
+        $em->flush();
+
+        return $this->redirectToRoute('author_list');
+    }
+
+    // Rechercher les auteurs selon le nombre de livres
+    #[Route('/search', name: 'author_search')]
+    public function search(Request $request, AuthorRepository $repo): Response
+    {
+        $min = $request->query->getInt('min', 0);
+        $max = $request->query->getInt('max', 100);
+
+        $authors = $repo->findAuthorsByBookRange($min, $max);
+
+        return $this->render('author/search.html.twig', [
+            'authors' => $authors,
+            'min' => $min,
+            'max' => $max
+        ]);
+    }
+
+    // Afficher un auteur
+    #[Route('/show/{id}', name: 'show_author')]
+    public function show(Author $author): Response
+    {
+        return $this->render('author/showAuthor.html.twig', [
+            'author' => $author
+        ]);
+    }
 }
